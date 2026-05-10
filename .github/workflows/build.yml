@@ -78,6 +78,11 @@ jobs:
       - name: Add BlinkLED module
         run: |
           xrobot_add_mod BlinkLED --instance-id BlinkLED_0
+      - name: Add modules
+        run: |
+          xrobot_add_mod RMMotor --instance-id motor_small_pitch
+          xrobot_add_mod RMMotor --instance-id motor_scope
+          xrobot_add_mod Referee --instance-id ref
 
       - name: Add this repo module
         run: |
