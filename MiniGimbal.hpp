@@ -87,7 +87,7 @@ enum class ScopeMode : uint8_t {
   CLOSE,
 };
 
-constexpr uint16_t UI_GIMBAL_LAYER = 1;
+constexpr uint16_t UI_MINI_GIMBAL_LAYER = 1;
 
 class MiniGimbal : public LibXR::Application {
  public:
@@ -377,7 +377,7 @@ class MiniGimbal : public LibXR::Application {
       case 0: {
         // 绘制云台俯仰线
         Referee::UIFigure line1_fig{};
-        referee_->FillLine(line1_fig, "MP", ADD_OP, UI_GIMBAL_LAYER, pit_color,
+        referee_->FillLine(line1_fig, "MP", ADD_OP, UI_MINI_GIMBAL_LAYER, pit_color,
                            3, 318, 643, pit_x, pit_y);
         referee_->SendUIFigure(robot_id, client_id, line1_fig);
         break;
@@ -385,7 +385,7 @@ class MiniGimbal : public LibXR::Application {
       case 1: {
         // 绘制云台镜头线
         Referee::UIFigure line2_fig{};
-        referee_->FillLine(line2_fig, "MS", ADD_OP, UI_GIMBAL_LAYER,
+        referee_->FillLine(line2_fig, "MS", ADD_OP, UI_MINI_GIMBAL_LAYER,
                            scope_color, 3, 318, 643, scope_x, scope_y);
         referee_->SendUIFigure(robot_id, client_id, line2_fig);
         break;
@@ -441,5 +441,5 @@ class MiniGimbal : public LibXR::Application {
   // UI members like HeroLauncher
   uint8_t ui_step_ = 0;
   uint8_t ui_tick_ = 0;
-  LibXR::Timer::TimerHandle ui_timer_handle_;
+  //LibXR::Timer::TimerHandle ui_timer_handle_;
 };
