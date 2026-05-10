@@ -55,7 +55,6 @@ depends:
 #include <cstdlib>
 #include <cstring>
 
-#include "CMD.hpp"
 #include "Motor.hpp"
 #include "Referee.hpp"
 #include "app_framework.hpp"
