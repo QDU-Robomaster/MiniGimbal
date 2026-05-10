@@ -39,8 +39,8 @@ constructor_args:
       cycle: false
   - motor_pitch: '@&motor_small_pit'
   - motor_scope: '@&motor_scope'
-  - referee: '@&ref'
   - scope_open_angle: 0.0
+  - referee: '@&ref'
   - thread_priority: LibXR::Thread::Priority::MEDIUM
 template_args: []
 required_hardware: []
