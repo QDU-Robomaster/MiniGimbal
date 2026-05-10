@@ -100,7 +100,7 @@ jobs:
         run: |
           xrobot_init_mod
 
-- name: Add modules
+      - name: Add modules
         run: |
           xrobot_add_mod RMMotor --instance-id motor_small_pit
           xrobot_add_mod RMMotor --instance-id motor_scope
