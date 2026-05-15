@@ -278,7 +278,7 @@ class MiniGimbal : public LibXR::Application {
     pid_pit_angle_.Reset();
     pid_pit_omega_.Reset();
     if (mode == PitMode::LOB) {
-      // pit_ = pit_ + 0.0349f;
+      pit_ = pit_ + 0.13f;
       pit_ = std::clamp(pit_, -0.78f, 0.0f);
       target_pit_ = init_pit_angle_ + pit_;
     } else {
@@ -296,13 +296,13 @@ class MiniGimbal : public LibXR::Application {
     if (mode == ScopeMode::CLOSE) {
       target_scope_ = init_scope_angle_;
     } else {
-      target_scope_ = init_scope_angle_ - scope_open_angle_;
+      target_scope_ = init_scope_angle_ + scope_open_angle_;
     }
     scope_mode_ = mode;
   }
 
   void ResetLob() {
-    // pit_ = pit_ + 0.0348f;
+    pit_ = pit_ + 0.13f;
     pit_ = std::clamp(pit_, -0.78f, 0.0f);
     target_pit_ = init_pit_angle_ + pit_;
   }
@@ -338,8 +338,6 @@ class MiniGimbal : public LibXR::Application {
     init_scope_angle_ = scope_angle_;
   }
   void DrawUI() {
-    if (referee_ == nullptr) return;
-
     uint16_t robot_id = referee_->GetRobotID();
     uint16_t client_id = referee_->GetClientID(robot_id);
 
@@ -377,8 +375,8 @@ class MiniGimbal : public LibXR::Application {
       case 0: {
         // 绘制云台俯仰线
         Referee::UIFigure line1_fig{};
-        referee_->FillLine(line1_fig, "MP", ADD_OP, UI_MINI_GIMBAL_LAYER, pit_color,
-                           3, 318, 643, pit_x, pit_y);
+        referee_->FillLine(line1_fig, "MP", ADD_OP, UI_MINI_GIMBAL_LAYER,
+                           pit_color, 3, 318, 643, pit_x, pit_y);
         referee_->SendUIFigure(robot_id, client_id, line1_fig);
         break;
       }
@@ -441,5 +439,5 @@ class MiniGimbal : public LibXR::Application {
   // UI members like HeroLauncher
   uint8_t ui_step_ = 0;
   uint8_t ui_tick_ = 0;
-  //LibXR::Timer::TimerHandle ui_timer_handle_;
+  // LibXR::Timer::TimerHandle ui_timer_handle_;
 };
