@@ -37,17 +37,17 @@ constructor_args:
       i_limit: 0.0
       out_limit: 0.0
       cycle: false
-  - motor_pitch: '@&motor_small_pit'
-  - motor_scope: '@&motor_scope'
+  - motor_pitch: '@nullptr'
+  - motor_scope: '@nullptr'
   - scope_open_angle: 0.0
-  - referee: '@&ref'
+  - referee: '@nullptr'
   - thread_priority: LibXR::Thread::Priority::MEDIUM
 template_args: []
 required_hardware: []
 depends:
   - qdu-future/CMD
   - qdu-future/Motor
-  - qdu-future/BMI088
+  - xrobot-org/BMI088
   - qdu-future/Referee
 === END MANIFEST === */
 // clang-format on
@@ -108,6 +108,10 @@ class MiniGimbal : public LibXR::Application {
         scope_open_angle_(scope_open_angle),
         referee_(referee) {
     UNUSED(app);
+
+    ASSERT(motor_small_pitch_ != nullptr);
+    ASSERT(motor_scope_ != nullptr);
+    ASSERT(referee_ != nullptr);
 
     thread_.Create(this, ThreadFunc, "MiniGimbalThread", task_stack_depth,
                    thread_priority);
