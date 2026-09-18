@@ -55,24 +55,33 @@ constexpr uint16_t UI_MINI_GIMBAL_LAYER = 1;
 class MiniGimbal
 {
  public:
-  MiniGimbal(
-
-      uint32_t task_stack_depth, LibXR::PID<float>::Param pid_pit_angle,
-      LibXR::PID<float>::Param pid_pit_omega, LibXR::PID<float>::Param pid_scope_angle,
-      LibXR::PID<float>::Param pid_scope_omega, Motor* motor_small_pitch,
-      Motor* motor_scope, float scope_open_angle, Referee* referee,
-      LibXR::Thread::Priority thread_priority = LibXR::Thread::Priority::MEDIUM)
-      : pid_pit_angle_(pid_pit_angle),
-        pid_pit_omega_(pid_pit_omega),
-        pid_scope_angle_(pid_scope_angle),
-        pid_scope_omega_(pid_scope_omega),
-        motor_small_pitch_(motor_small_pitch),
-        motor_scope_(motor_scope),
-        scope_open_angle_(scope_open_angle),
-        referee_(referee)
+  struct Param
   {
-    thread_.Create(this, ThreadFunc, "MiniGimbalThread", task_stack_depth,
-                   thread_priority);
+    uint32_t task_stack_depth;
+    LibXR::PID<float>::Param pid_pit_angle;
+    LibXR::PID<float>::Param pid_pit_omega;
+    LibXR::PID<float>::Param pid_scope_angle;
+    LibXR::PID<float>::Param pid_scope_omega;
+    float scope_open_angle;
+    LibXR::Thread::Priority thread_priority;
+  };
+
+  MiniGimbal(
+      Motor& motor_small_pitch,
+      Motor& motor_scope,
+      Referee& referee,
+      const Param& param = {.task_stack_depth = 1536, .pid_pit_angle = {.k = 1.0f, .p = 1.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_pit_omega = {.k = 1.0f, .p = 5.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_scope_angle = {.k = 1.0f, .p = 1.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_scope_omega = {.k = 1.0f, .p = 0.5f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .scope_open_angle = 0.0f, .thread_priority = LibXR::Thread::Priority::MEDIUM})
+      : pid_pit_angle_(param.pid_pit_angle),
+        pid_pit_omega_(param.pid_pit_omega),
+        pid_scope_angle_(param.pid_scope_angle),
+        pid_scope_omega_(param.pid_scope_omega),
+        motor_small_pitch_(&motor_small_pitch),
+        motor_scope_(&motor_scope),
+        scope_open_angle_(param.scope_open_angle),
+        referee_(&referee)
+  {
+    thread_.Create(this, ThreadFunc, "MiniGimbalThread", param.task_stack_depth,
+                   param.thread_priority);
 
     auto callback = LibXR::Callback<uint32_t>::Create(
         [](bool in_isr, MiniGimbal* minigimbal, uint32_t event_id)
