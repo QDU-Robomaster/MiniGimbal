@@ -249,8 +249,6 @@ class MiniGimbal
     motor_control(motor_scope_, motor_scope_feedback_, scope_out);
   }
 
-  void OnMonitor() {}
-
   LibXR::Event& GetEvent() { return minigimbal_event_; }
 
   void SetPitMode(PitMode mode)
