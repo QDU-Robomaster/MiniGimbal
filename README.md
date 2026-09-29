@@ -22,7 +22,7 @@
   | `SET_SCOPE_OPEN` | scope 转到初始角 + `scope_open_angle` |
   | `SET_SCOPE_CLOSE` | scope 回到初始角 |
 
-- 订阅 `ahrs_euler`（`LibXR::EulerAngle<float>`，名字固定），其 pitch 用于吊射目标。
+- 订阅 `param.euler_topic_name`（默认 `ahrs_euler`，`LibXR::EulerAngle<float>`），其 pitch 用于吊射目标。
 - 类中有绘制裁判系统 UI 的 `DrawUI()`，但当前构造函数没有启动对应的定时任务。
 
 ## 依赖
@@ -57,6 +57,7 @@ MiniGimbal(Motor& motor_small_pitch,
 - `pid_scope_omega`：scope 速度环，默认 `k = 1, p = 0.5`，其余为 0。
 - `scope_open_angle`：倍镜打开时相对初始角的角度 (rad)，默认 0。
 - `thread_priority`：线程优先级，默认 `MEDIUM`。
+- `euler_topic_name`：订阅的姿态欧拉角 Topic，默认 `"ahrs_euler"`，须与姿态解算实例发布的名字一致。
 
 ## 使用
 
@@ -113,6 +114,7 @@ modules:
             cycle: 'false'
           scope_open_angle: 0.0f
           thread_priority: LibXR::Thread::Priority::MEDIUM
+          euler_topic_name: '"ahrs_euler"'
 ```
 
 所有依赖都是其他模块实例的 id，须在本实例之前列出：`motor_small_pit`、`motor_scope` 为
