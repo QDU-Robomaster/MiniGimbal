@@ -64,13 +64,14 @@ class MiniGimbal
     LibXR::PID<float>::Param pid_scope_omega;
     float scope_open_angle;
     LibXR::Thread::Priority thread_priority;
+    const char* euler_topic_name;  ///< 订阅的姿态欧拉角 Topic 名称
   };
 
   MiniGimbal(
       Motor& motor_small_pitch,
       Motor& motor_scope,
       Referee& referee,
-      const Param& param = {.task_stack_depth = 1536, .pid_pit_angle = {.k = 1.0f, .p = 1.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_pit_omega = {.k = 1.0f, .p = 5.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_scope_angle = {.k = 1.0f, .p = 1.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_scope_omega = {.k = 1.0f, .p = 0.5f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .scope_open_angle = 0.0f, .thread_priority = LibXR::Thread::Priority::MEDIUM})
+      const Param& param = {.task_stack_depth = 1536, .pid_pit_angle = {.k = 1.0f, .p = 1.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_pit_omega = {.k = 1.0f, .p = 5.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_scope_angle = {.k = 1.0f, .p = 1.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .pid_scope_omega = {.k = 1.0f, .p = 0.5f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}, .scope_open_angle = 0.0f, .thread_priority = LibXR::Thread::Priority::MEDIUM, .euler_topic_name = "ahrs_euler"})
       : pid_pit_angle_(param.pid_pit_angle),
         pid_pit_omega_(param.pid_pit_omega),
         pid_scope_angle_(param.pid_scope_angle),
@@ -80,6 +81,7 @@ class MiniGimbal
         scope_open_angle_(param.scope_open_angle),
         referee_(&referee)
   {
+    euler_topic_name_ = param.euler_topic_name;
     thread_.Create(this, ThreadFunc, "MiniGimbalThread", param.task_stack_depth,
                    param.thread_priority);
 
@@ -147,7 +149,8 @@ class MiniGimbal
 
   static void ThreadFunc(MiniGimbal* minigimbal)
   {
-    LibXR::Topic::ASyncSubscriber<LibXR::EulerAngle<float>> euler_suber("ahrs_euler");
+    LibXR::Topic::ASyncSubscriber<LibXR::EulerAngle<float>> euler_suber(
+        minigimbal->euler_topic_name_);
     euler_suber.StartWaiting();
 
     minigimbal->last_online_time_ = LibXR::Timebase::GetMicroseconds();
@@ -422,6 +425,7 @@ class MiniGimbal
   LibXR::MicrosecondTimestamp last_wakeup_;
   LibXR::MicrosecondTimestamp last_online_time_;
 
+  const char* euler_topic_name_ = nullptr;
   LibXR::Thread thread_;
 
   // UI members like HeroLauncher
