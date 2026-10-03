@@ -25,48 +25,96 @@ depends:
 #include "thread.hpp"
 #include "timebase.hpp"
 
+/**
+ * @brief 小云台事件，数值同时是 `GetEvent()` 上注册的事件 ID。
+ *        Mini gimbal events; the values are also the event IDs registered on
+ *        `GetEvent()`.
+ */
 enum class MiniGimbalEvent : uint8_t
 {
-  SET_MODE_RELAX,
-  SET_MODE_COMMON,
-  SET_MODE_LOB,
-  RESET_LOB_MODE,
-  RESET_MINIGIMBAL,
-  SET_SCOPE_OPEN,
-  SET_SCOPE_CLOSE,
+  SET_MODE_RELAX,    ///< pitch 与 scope 都放松 Relax both pitch and scope
+  SET_MODE_COMMON,   ///< pitch 回到初始角 Pitch returns to the initial angle
+  SET_MODE_LOB,      ///< 吊射 Lob shot
+  RESET_LOB_MODE,    ///< 按当前 IMU pitch 重新计算吊射目标
+                     ///< Recompute the lob target from the current IMU pitch
+  RESET_MINIGIMBAL,  ///< 重置初始角，仅在 COMMON 下有效
+                     ///< Reset the initial angles, effective only in COMMON
+  SET_SCOPE_OPEN,    ///< scope 转到打开位置 Scope turns to the open position
+  SET_SCOPE_CLOSE,   ///< scope 回到初始角 Scope returns to the initial angle
 };
 
+/**
+ * @brief pitch 电机模式。
+ *        Pitch motor modes.
+ */
 enum class PitMode : uint8_t
 {
-  PITRELAX,
-  COMMON,
-  LOB,
+  PITRELAX,  ///< 放松 Relax
+  COMMON,    ///< 回到初始角 Return to the initial angle
+  LOB,       ///< 吊射 Lob shot
 };
 
+/**
+ * @brief scope 电机模式。
+ *        Scope motor modes.
+ */
 enum class ScopeMode : uint8_t
 {
-  SCOPERELAX,
-  OPEN,
-  CLOSE,
+  SCOPERELAX,  ///< 放松 Relax
+  OPEN,        ///< 打开 Open
+  CLOSE,       ///< 关闭 Close
 };
 
+/// 小云台 UI 使用的图层编号
+/// Layer number used by the mini gimbal UI
 constexpr uint16_t UI_MINI_GIMBAL_LAYER = 1;
 
+/**
+ * @brief 小云台模块：控制一个小 pitch 电机和一个倍镜（scope）电机，用于吊射视角调整。
+ *        Mini gimbal Module controlling a small pitch motor and a scope motor for
+ *        adjusting the lob-shot view.
+ */
 class MiniGimbal
 {
  public:
+  /**
+   * @brief 小云台配置参数。
+   *        Mini gimbal configuration parameters.
+   */
   struct Param
   {
-    uint32_t task_stack_depth;
-    LibXR::PID<float>::Param pid_pit_angle;
-    LibXR::PID<float>::Param pid_pit_omega;
-    LibXR::PID<float>::Param pid_scope_angle;
-    LibXR::PID<float>::Param pid_scope_omega;
-    float scope_open_angle;
-    LibXR::Thread::Priority thread_priority;
-    const char* euler_topic_name;  ///< 订阅的姿态欧拉角 Topic 名称
+    uint32_t task_stack_depth;                 ///< 线程栈深
+                                               ///< Thread stack depth
+    LibXR::PID<float>::Param pid_pit_angle;    ///< pitch 角度环 PID
+                                               ///< Pitch angle-loop PID
+    LibXR::PID<float>::Param pid_pit_omega;    ///< pitch 速度环 PID
+                                               ///< Pitch speed-loop PID
+    LibXR::PID<float>::Param pid_scope_angle;  ///< scope 角度环 PID
+                                               ///< Scope angle-loop PID
+    LibXR::PID<float>::Param pid_scope_omega;  ///< scope 速度环 PID
+                                               ///< Scope speed-loop PID
+    float scope_open_angle;                    ///< 倍镜打开时相对初始角的角度 (rad)
+                             ///< Angle of the opened scope relative to the initial
+                             ///< angle (rad)
+    LibXR::Thread::Priority thread_priority;  ///< 线程优先级
+                                              ///< Thread priority
+    const char* euler_topic_name;             ///< 订阅的姿态欧拉角 Topic 名称
+                                   ///< Name of the subscribed attitude Euler angle Topic
   };
 
+  /**
+   * @brief 构造 MiniGimbal，创建控制线程并注册事件。
+   *        Construct MiniGimbal, create the control thread and register the events.
+   *
+   * @param motor_small_pitch 小 pitch 电机。
+   *                          Small pitch motor.
+   * @param motor_scope 倍镜电机。
+   *                    Scope motor.
+   * @param referee Referee 实例，供 `DrawUI()` 使用。
+   *                Referee instance used by `DrawUI()`.
+   * @param param 配置参数。
+   *              Configuration parameters.
+   */
   MiniGimbal(
       Motor& motor_small_pitch,
       Motor& motor_scope,
@@ -138,6 +186,14 @@ class MiniGimbal
                                callback);
   }
 
+  /**
+   * @brief 控制线程函数：订阅姿态欧拉角，每 2 ms 执行一轮更新与控制。
+   *        Control thread function that subscribes to the attitude Euler angles and
+   *        runs one update and control iteration every 2 ms.
+   *
+   * @param minigimbal MiniGimbal 实例指针。
+   *                   Pointer to the MiniGimbal instance.
+   */
   static void ThreadFunc(MiniGimbal* minigimbal)
   {
     LibXR::Topic::ASyncSubscriber<LibXR::EulerAngle<float>> euler_suber(
@@ -160,6 +216,11 @@ class MiniGimbal
     }
   }
 
+  /**
+   * @brief 刷新电机反馈，累加 pitch 与 scope 角度，并读取姿态 pitch。
+   *        Refresh the motor feedback, accumulate the pitch and scope angles, and
+   *        read the attitude pitch.
+   */
   void Update()
   {
     const float LAST_PIT_ANGLE = motor_small_pitch_feedback_.abs_angle;
@@ -194,6 +255,12 @@ class MiniGimbal
     }
   }
 
+  /**
+   * @brief 计算 pitch 与 scope 的角度环、速度环输出并以 `MODE_CURRENT` 下发；
+   *        两路都放松时 `Relax()`。
+   *        Compute the angle-loop and speed-loop outputs of pitch and scope and send
+   *        them in `MODE_CURRENT`; `Relax()` when both are relaxed.
+   */
   void Control()
   {
     if (pit_mode_ == PitMode::PITRELAX && scope_mode_ == ScopeMode::SCOPERELAX)
@@ -243,8 +310,25 @@ class MiniGimbal
     motor_control(motor_scope_, motor_scope_feedback_, scope_out);
   }
 
+  /**
+   * @brief 获取小云台事件对象，`MiniGimbalEvent` 的各个值注册在其上。
+   *        Get the mini gimbal event object on which every value of
+   *        `MiniGimbalEvent` is registered.
+   *
+   * @return 事件对象的引用。
+   *         Reference to the event object.
+   */
   LibXR::Event& GetEvent() { return minigimbal_event_; }
 
+  /**
+   * @brief 设置 pitch 模式并复位 pitch 的 PID；`LOB` 时按 IMU pitch 计算吊射目标，
+   *        其他模式回到初始角。
+   *        Set the pitch mode and reset the pitch PIDs; `LOB` computes the lob target
+   *        from the IMU pitch, and the other modes return to the initial angle.
+   *
+   * @param mode 目标 pitch 模式。
+   *             Target pitch mode.
+   */
   void SetPitMode(PitMode mode)
   {
     pid_pit_angle_.Reset();
@@ -262,6 +346,16 @@ class MiniGimbal
     pit_mode_ = mode;
   }
 
+  /**
+   * @brief 设置 scope 模式并复位 scope 的 PID；`CLOSE` 回到初始角，其他模式转到
+   *        初始角加 `scope_open_angle`；模式不变时直接返回。
+   *        Set the scope mode and reset the scope PIDs; `CLOSE` returns to the initial
+   *        angle and the other modes turn to the initial angle plus
+   *        `scope_open_angle`; returns directly when the mode is unchanged.
+   *
+   * @param mode 目标 scope 模式。
+   *             Target scope mode.
+   */
   void SetScopeMode(ScopeMode mode)
   {
     if (mode == scope_mode_)
@@ -281,6 +375,10 @@ class MiniGimbal
     scope_mode_ = mode;
   }
 
+  /**
+   * @brief 按当前 IMU pitch 重新计算吊射目标。
+   *        Recompute the lob target from the current IMU pitch.
+   */
   void ResetLob()
   {
     pit_ = pit_ + 0.13f;
@@ -288,6 +386,13 @@ class MiniGimbal
     target_pit_ = init_pit_angle_ + pit_;
   }
 
+  /**
+   * @brief 重置初始角：两个电机以固定电流驱动 0.8 s，放松到 1.5 s，再以当前角度作为
+   *        新的初始角；阻塞调用者约 1.5 s。
+   *        Reset the initial angles: drive both motors with a fixed current for 0.8 s,
+   *        relax them until 1.5 s, and take the current angles as the new initial
+   *        angles; blocks the caller for about 1.5 s.
+   */
   void ResetGimbal()
   {
     first_enter_time_ = LibXR::Timebase::GetMilliseconds();
@@ -319,6 +424,11 @@ class MiniGimbal
     init_pit_angle_ = pit_angle_;
     init_scope_angle_ = scope_angle_;
   }
+  /**
+   * @brief 在图层 1 上绘制一步裁判系统 UI（pitch 线与镜头线交替）。
+   *        Draw one step of the referee system UI on layer 1, alternating between
+   *        the pitch line and the scope line.
+   */
   void DrawUI()
   {
     uint16_t robot_id = referee_->GetRobotID();
