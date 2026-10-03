@@ -2,7 +2,7 @@
 
 // clang-format off
 /* === MODULE MANIFEST V2 ===
-module_description: Mini Gimbal module for small gimbal control
+module_description: 小云台模块：控制一个小 pitch 电机和一个倍镜电机，用于吊射视角调整 / Mini gimbal Module controlling a small pitch motor and a scope motor for adjusting the lob-shot view
 depends:
 - id: QDU-Robomaster/CMD
   ref: same-or-dev
@@ -105,8 +105,7 @@ class MiniGimbal
               minigimbal->ResetLob();
               break;
             case MiniGimbalEvent::RESET_MINIGIMBAL:
-              if (  //(minigimbal->scope_mode_ == ScopeMode::CLOSE) &&
-                  minigimbal->pit_mode_ == PitMode::COMMON)
+              if (minigimbal->pit_mode_ == PitMode::COMMON)
               {
                 minigimbal->ResetGimbal();
               }
@@ -137,14 +136,6 @@ class MiniGimbal
                                callback);
     minigimbal_event_.Register(static_cast<uint32_t>(MiniGimbalEvent::SET_SCOPE_CLOSE),
                                callback);
-
-    // void (*DrawUi)(MiniGimbal*) = [](MiniGimbal* minigimbal) {
-    //   minigimbal->DrawUI();
-    // };
-    // ui_timer_handle_ =
-    //     LibXR::Timer::CreateTask(DrawUi, this, 1000);  // 1Hz like
-    // LibXR::Timer::Add(ui_timer_handle_);
-    // LibXR::Timer::Start(ui_timer_handle_);
   }
 
   static void ThreadFunc(MiniGimbal* minigimbal)
@@ -428,8 +419,7 @@ class MiniGimbal
   const char* euler_topic_name_ = nullptr;
   LibXR::Thread thread_;
 
-  // UI members like HeroLauncher
+  // UI 绘制步骤与计数
   uint8_t ui_step_ = 0;
   uint8_t ui_tick_ = 0;
-  // LibXR::Timer::TimerHandle ui_timer_handle_;
 };
