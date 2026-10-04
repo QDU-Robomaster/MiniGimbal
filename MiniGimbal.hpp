@@ -4,8 +4,6 @@
 /* === MODULE MANIFEST V2 ===
 module_description: 小云台模块：控制一个小 pitch 电机和一个倍镜电机，用于吊射视角调整 / Mini gimbal Module controlling a small pitch motor and a scope motor for adjusting the lob-shot view
 depends:
-- id: QDU-Robomaster/CMD
-  ref: same-or-dev
 - id: QDU-Robomaster/Motor
   ref: same-or-dev
 - id: QDU-Robomaster/Referee
