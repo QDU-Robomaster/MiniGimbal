@@ -18,7 +18,7 @@
 | `SET_MODE_COMMON` | pitch 回到初始角 |
 | `SET_MODE_LOB` | 吊射：pitch 目标为初始角加 clamp(云台 IMU pitch + 0.13, -0.78, 0) |
 | `RESET_LOB_MODE` | 按当前 IMU pitch 重新计算吊射目标 |
-| `RESET_MINIGIMBAL` | 在 `COMMON` 下有效：两个电机以固定电流驱动 0.8 s，放松到 1.5 s，再以当前角度作为新的初始角；该过程在触发事件的调用者上下文中阻塞约 1.5 s |
+| `RESET_MINIGIMBAL` | 在 `COMMON` 下有效：两个电机以固定电流驱动 0.8 s，放松到 1.5 s，再以当前角度作为新的初始角 |
 | `SET_SCOPE_OPEN` | scope 转到初始角加 `scope_open_angle` |
 | `SET_SCOPE_CLOSE` | scope 回到初始角 |
 
@@ -38,7 +38,7 @@ Events: `GetEvent()` returns a `LibXR::Event` on which every value of the global
 | `SET_MODE_COMMON` | Pitch returns to the initial angle |
 | `SET_MODE_LOB` | Lob shot: the pitch target is the initial angle plus clamp(gimbal IMU pitch + 0.13, -0.78, 0) |
 | `RESET_LOB_MODE` | Recompute the lob target from the current IMU pitch |
-| `RESET_MINIGIMBAL` | Effective in `COMMON`: both motors are driven with a fixed current for 0.8 s and relaxed until 1.5 s, and the current angles become the new initial angles; the process blocks the caller that triggers the event for about 1.5 s |
+| `RESET_MINIGIMBAL` | Effective in `COMMON`: both motors are driven with a fixed current for 0.8 s and relaxed until 1.5 s, and the current angles become the new initial angles |
 | `SET_SCOPE_OPEN` | Scope turns to the initial angle plus `scope_open_angle` |
 | `SET_SCOPE_CLOSE` | Scope returns to the initial angle |
 
